@@ -1,5 +1,10 @@
 port=$1
 
+# Create certificate.
 openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365
+
+# Get the Docker bridge IP.
 ip=`docker network inspect bridge | jq -r 'map(select(.Name == "bridge")) | .[0] | .IPAM | .Config | .[0] | .Gateway'`
+
+# Create the NGINX config.
 sed -e "s/\${ip}/$ip/" -e "s/\${port}/$port/" conf.template > proxy_ssl.conf
