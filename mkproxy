@@ -8,3 +8,6 @@ ip=`docker network inspect bridge | jq -r 'map(select(.Name == "bridge")) | .[0]
 
 # Create the NGINX config.
 sed -e "s/\${ip}/$ip/" -e "s/\${port}/$port/" conf.template > proxy_ssl.conf
+
+# Run the container.
+docker run --name nginx_proxy -d -v `pwd`:/etc/nginx/conf.d -p 443:443 nginx
