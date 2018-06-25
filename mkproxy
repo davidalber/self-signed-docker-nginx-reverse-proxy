@@ -1,7 +1,9 @@
 port=$1
 
 # Create certificate.
-openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365
+if [ ! -f cert.pem ] || [ ! -f key.pem ]; then
+  openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365
+fi
 
 # Get the Docker bridge IP.
 ip=`docker network inspect bridge | jq -r 'map(select(.Name == "bridge")) | .[0] | .IPAM | .Config | .[0] | .Gateway'`
