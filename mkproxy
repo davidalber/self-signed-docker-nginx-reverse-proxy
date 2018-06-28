@@ -1,15 +1,69 @@
-port=$1
+usage()
+{
+  echo "usage: mkproxy CMD [-p PORT]"
+  echo
+  echo "Run an NGINX reverse proxy with SSL in front of a specified port."
+  echo
+  echo "positional arguments:"
+  echo " CMD              'up' or 'down'"
+  echo
+  echo "flag arguments:"
+  echo " -h, --help       show this help message and exit"
+  echo " -p, --port PORT  port to proxy to; required if CMD is 'up'"
+}
 
-# Create certificate.
-if [ ! -f cert.pem ] || [ ! -f key.pem ]; then
-  openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365
+if [ $# -lt 1 ]; then
+  echo -e "no CMD was given\n"
+  usage
+  exit 1
 fi
 
-# Get the Docker bridge IP.
-ip=`docker network inspect bridge | jq -r 'map(select(.Name == "bridge")) | .[0] | .IPAM | .Config | .[0] | .Gateway'`
+cmd=$1
+shift
 
-# Create the NGINX config.
-sed -e "s/\${ip}/$ip/" -e "s/\${port}/$port/" conf.template > proxy_ssl.conf
+if [ "$cmd" != "up" ] && [ "$cmd" != "down" ]; then
+  echo -e "CMD must be 'up' or 'down'\n"
+  usage
+  exit 1
+fi
 
-# Run the container.
-docker run --name nginx_proxy -d -v `pwd`:/etc/nginx/conf.d -p 443:443 nginx
+port=
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -p | --port )           shift
+                                port=$1
+                                ;;
+        -h | --help )           usage
+                                exit
+                                ;;
+        * )                     echo -e "unknown option $1\n"
+                                usage
+                                exit 1
+    esac
+    shift
+done
+
+if [ "$cmd" == "up" ]; then
+  if [ "$port" == "" ]; then
+    echo -e "port must be given when CMD is 'up'\n"
+    usage
+    exit 1
+  fi
+
+  # Create certificate.
+  if [ ! -f cert.pem ] || [ ! -f key.pem ]; then
+    openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365
+  fi
+
+  # Get the Docker bridge IP.
+  ip=`docker network inspect bridge | jq -r 'map(select(.Name == "bridge")) | .[0] | .IPAM | .Config | .[0] | .Gateway'`
+
+  # Create the NGINX config.
+  sed -e "s/\${ip}/$ip/" -e "s/\${port}/$port/" conf.template > proxy_ssl.conf
+
+  # Run the container.
+  docker run --rm --name nginx_proxy -d -v `pwd`:/etc/nginx/conf.d -p 443:443 nginx
+else
+  docker stop nginx_proxy
+fi
