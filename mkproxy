@@ -65,10 +65,19 @@ if [ "$cmd" == "up" ]; then
   ip=`docker network inspect bridge | jq -r 'map(select(.Name == "bridge")) | .[0] | .IPAM | .Config | .[0] | .Gateway'`
 
   # Create the NGINX config.
-  sed -e "s/\${ip}/$ip/" -e "s/\${port}/$port/" conf.template > proxy_ssl.conf
+  echo "# $name" > proxy_ssl.conf
+  sed -e "s/\${ip}/$ip/" -e "s/\${port}/$port/" conf.template >> proxy_ssl.conf
 
   # Run the container.
   docker run --rm --name $name -d -v `pwd`:/etc/nginx/conf.d -p 443:443 nginx
 else
+  if [ ! -f proxy_ssl.conf ]; then
+    echo "No proxy is running from this directory (proxy_ssl.conf is missing)"
+    exit 1
+  fi
+
+  # Get the container name from the configuration.
+  name=`head -n1 proxy_ssl.conf | cut -d" " -f2`
+
   docker stop $name
 fi
