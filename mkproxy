@@ -9,6 +9,7 @@ usage()
   echo
   echo "flag arguments:"
   echo " -h, --help       show this help message and exit"
+  echo " -n, --name NAME  Docker container name (defaults to 'nginx_proxy')"
   echo " -p, --port PORT  port to proxy to; required if CMD is 'up'"
 }
 
@@ -28,9 +29,13 @@ if [ "$cmd" != "up" ] && [ "$cmd" != "down" ]; then
 fi
 
 port=
+name="nginx_proxy"
 
 while [ "$1" != "" ]; do
     case $1 in
+        -n | --name )           shift
+                                name=$1
+                                ;;
         -p | --port )           shift
                                 port=$1
                                 ;;
@@ -63,7 +68,7 @@ if [ "$cmd" == "up" ]; then
   sed -e "s/\${ip}/$ip/" -e "s/\${port}/$port/" conf.template > proxy_ssl.conf
 
   # Run the container.
-  docker run --rm --name nginx_proxy -d -v `pwd`:/etc/nginx/conf.d -p 443:443 nginx
+  docker run --rm --name $name -d -v `pwd`:/etc/nginx/conf.d -p 443:443 nginx
 else
-  docker stop nginx_proxy
+  docker stop $name
 fi
