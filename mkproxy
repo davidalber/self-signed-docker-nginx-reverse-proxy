@@ -22,7 +22,10 @@ fi
 cmd=$1
 shift
 
-if [ "$cmd" != "up" ] && [ "$cmd" != "down" ]; then
+if [ "$cmd" == "-h" ] || [ "$cmd" == "--help" ] ; then
+  usage
+  exit
+elif [ "$cmd" != "up" ] && [ "$cmd" != "down" ]; then
   echo -e "CMD must be 'up' or 'down'\n"
   usage
   exit 1
