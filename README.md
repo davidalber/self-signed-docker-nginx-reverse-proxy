@@ -1,5 +1,7 @@
 The script in this repository automates the steps in [Self-signed SSL Reverse proxy with Docker](https://medium.com/@oliver.zampieri/self-signed-ssl-reverse-proxy-with-docker-dbfc78c05b41).
 
+This is handy if you want to quickly front a Docker service with SSL. In general, for more serious deployments I think you should do that in a more Docker internal way, such as setting up networking between your NGINX and application containers. This approach is handy for quickly putting SSL in front of something (e.g., I use this to quickly spin up [snappass](https://github.com/pinterest/snappass) instances with SSL).
+
 ```
 usage: mkproxy CMD [-p PORT]
 
